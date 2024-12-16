@@ -286,6 +286,8 @@ class FinalAgent:
         root_node = MCTSNode(state=game_state)
         start_time = time.time()
 
+        time_limit = 1
+
         while time.time() - start_time < time_limit:
             leaf_node = self._select(root_node)
             self._expand(leaf_node)
@@ -384,7 +386,7 @@ class FinalAgent:
 def main():
     from game_runner import run_many
 
-    agent1 = GreedyAgent()
+    agent1 = FinalAgent()
     agent2 = GreedyAgent()
     # Play 10 games
     run_many(agent1, agent2, 10)
