@@ -84,59 +84,53 @@ def get_features(game_state: GoState):
 
 class ValueNetwork(nn.Module):
     def __init__(self, input_size):
-      super(ValueNetwork, self).__init__()
+        super(ValueNetwork, self).__init__()
 
-      # TODO: What should the output size of a Value function be?
-      output_size = 1
+        # TODO: What should the output size of a Value function be?
+        output_size = 1
 
-      # TODO: Add more layers, non-linear functions, etc.=
-      self.linear = nn.Linear(input_size, output_size)
-      
-      # self.fc1 = nn.Linear(input_size, 128)
-      # self.fc2 = nn.Linear(128, 64)
-      # self.fc3 = nn.Linear(64, 32)
-      # self.fc4 = nn.Linear(32, 16)
-      # self.fc5 = nn.Linear(16, output_size)
-      
-      self.fc1 = nn.Linear(input_size, 32)
-      self.fc2 = nn.Linear(32, 16)
-      self.fc3 = nn.Linear(16, 8)
-      self.fc4 = nn.Linear(8, output_size)
+        # TODO: Add more layers, non-linear functions, etc.=
+        self.linear = nn.Linear(input_size, output_size)
+        
+        self.fc1 = nn.Linear(input_size, 32)
+        self.fc2 = nn.Linear(32, 16)
+        self.fc3 = nn.Linear(16, 8)
+        self.fc4 = nn.Linear(8, output_size)
 
-      self.sigmoid = nn.Sigmoid()
-      self.tanh = nn.Tanh()
-      self.relu = nn.ReLU() 
-      
+        self.sigmoid = nn.Sigmoid()
+        self.tanh = nn.Tanh()
+        self.relu = nn.ReLU() 
+        
 
 
     def forward(self, x):
-      """
-      Run forward pass of network
+        """
+        Run forward pass of network
 
-      Input:
+        Input:
         x: input to network
-      Output:
+        Output:
         output of network
-      """
-      # TODO: Update as more layers are added
+        """
+        # TODO: Update as more layers are added
 
-      z1 = self.fc1(x)
-      a1 = self.relu(z1)
-      
-      z2 = self.fc2(a1)
-      a2 = self.tanh(z2)
-      
-      z3 = self.fc3(a2)
-      a3 = self.relu(z3)
+        z1 = self.fc1(x)
+        a1 = self.relu(z1)
+        
+        z2 = self.fc2(a1)
+        a2 = self.tanh(z2)
+        
+        z3 = self.fc3(a2)
+        a3 = self.relu(z3)
 
-      z4 = self.fc4(a3)
-      # a4 = self.tanh(z4)
-      output = self.sigmoid(z4)
+        z4 = self.fc4(a3)
+        # a4 = self.tanh(z4)
+        output = self.sigmoid(z4)
 
-      # z5 = self.fc5(a4)
-      # output = self.sigmoid(z5)
+        # z5 = self.fc5(a4)
+        # output = self.sigmoid(z5)
 
-      return output
+        return output
 
 def train_value_network(dataset, num_epochs, learning_rate):
     """
@@ -209,41 +203,41 @@ def train_value_network(dataset, num_epochs, learning_rate):
 
 class PolicyNetwork(nn.Module):
     def __init__(self, input_size, board_size=5):
-      super(PolicyNetwork, self).__init__()
+        super(PolicyNetwork, self).__init__()
 
-      # TODO: What should the output size of the Policy be?
-      output_size = (board_size * board_size) + 1
+        # TODO: What should the output size of the Policy be?
+        output_size = (board_size * board_size) + 1
 
-      # TODO: Add more layers, non-linear functions, etc.
-      self.linear = nn.Linear(input_size, output_size)
-      
-      self.fc1 = nn.Linear(input_size, 32)
-      self.fc2 = nn.Linear(32, 16)
-      self.fc3 = nn.Linear(16, 8)
-      self.fc4 = nn.Linear(8, output_size)
+        # TODO: Add more layers, non-linear functions, etc.
+        self.linear = nn.Linear(input_size, output_size)
+        
+        self.fc1 = nn.Linear(input_size, 32)
+        self.fc2 = nn.Linear(32, 16)
+        self.fc3 = nn.Linear(16, 8)
+        self.fc4 = nn.Linear(8, output_size)
 
-      self.sigmoid = nn.Sigmoid()
-      self.tanh = nn.Tanh()
-      self.relu = nn.ReLU() 
-      self.softmax = nn.Softmax(dim=-1) 
-      # needed for class probabilities; output probabilities sum to 1
+        self.sigmoid = nn.Sigmoid()
+        self.tanh = nn.Tanh()
+        self.relu = nn.ReLU() 
+        self.softmax = nn.Softmax(dim=-1) 
+        # needed for class probabilities; output probabilities sum to 1
 
     def forward(self, x):
-      # TODO: Update as more layers are added
+        # TODO: Update as more layers are added
 
-      z1 = self.fc1(x)
-      a1 = self.relu(z1)
-      
-      z2 = self.fc2(a1)
-      a2 = self.relu(z2)
-      
-      z3 = self.fc3(a2)
-      a3 = self.relu(z3)
+        z1 = self.fc1(x)
+        a1 = self.relu(z1)
+        
+        z2 = self.fc2(a1)
+        a2 = self.relu(z2)
+        
+        z3 = self.fc3(a2)
+        a3 = self.relu(z3)
 
-      z4 = self.fc4(a3)
-      output = self.sigmoid(z4)
+        z4 = self.fc4(a3)
+        output = self.sigmoid(z4)
 
-      return output
+        return output
 
 def train_policy_network(dataset, num_epochs, learning_rate):
     """
@@ -328,4 +322,4 @@ value_model = train_value_network(dataset_5x5, 10, 1e-4)
 save_model("value_model_2.pt", value_model)
 
 policy_net = train_policy_network(dataset_5x5, 10, 1e-4)
-save_model("policy_model_3.pt", policy_net)
+save_model("policy_model_2.pt", policy_net)

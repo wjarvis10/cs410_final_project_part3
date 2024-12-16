@@ -271,6 +271,7 @@ class FinalAgent:
         self.mcts_c = mcts_c
         self.board_size = board_size
         self.search_problem = GoProblem()
+        self.move_counter = 0
 
     def get_move(self, game_state: GoState, time_limit: float) -> Action:
         """
@@ -286,16 +287,29 @@ class FinalAgent:
         root_node = MCTSNode(state=game_state)
         start_time = time.time()
 
-        time_limit = 1
+        print("Move ", self.move_counter)
+        self.move_counter += 1
+        
+        time_limit = 1 #Update this for better uses of time
+
+        legal_moves = root_node.state.legal_actions()
+
+        best_value = 0
+        best_action = random.choice(legal_moves)
 
         while time.time() - start_time < time_limit:
             leaf_node = self._select(root_node)
             self._expand(leaf_node)
             simulation_result = self._simulate(leaf_node)
             self._backpropagate(leaf_node, simulation_result)
+            best_child = max(root_node.children, key=lambda child: child.visits)
+            if best_child.visits > best_value:
+                best_value = best_child.visits
+                best_action = best_child.action
 
         # Choose the action leading to the most visited child node
-        best_action = max(root_node.children, key=lambda child: child.visits).action
+        # best_action = max(root_node.children, key=lambda child: child.visits).action
+
         return best_action
 
     def _select(self, node: MCTSNode) -> MCTSNode:
@@ -311,7 +325,7 @@ class FinalAgent:
         while node.children:
             best_node = max(
                 node.children,
-                key=lambda child: (child.value / child.visits if child.visits > 0 else 0) +
+                key=lambda child: (child.value / child.visits if child.visits > 0 else float('inf')) +
                                 self.mcts_c * child.prior_prob * np.sqrt(node.visits / (child.visits + 1))
             )
             node = best_node
@@ -382,6 +396,9 @@ class FinalAgent:
             np.ndarray: Encoded features.
         """
         return np.array(state.get_board()).flatten()
+
+    def __str__(self):
+        return "Final Agent"
 
 def main():
     from game_runner import run_many
