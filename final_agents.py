@@ -312,7 +312,7 @@ class FinalAgent:
 
     def _select(self, node: MCTSNode) -> MCTSNode:
         """
-        Selects a node to expand using UCT.
+        Selects a node to expand using PUCT (Policy-based UCT).
 
         Args:
             node (MCTSNode): The current node.
@@ -323,11 +323,12 @@ class FinalAgent:
         while node.children:
             best_node = max(
                 node.children,
-                key=lambda child: (child.value / child.visits if child.visits > 0 else float('inf')) +
-                                  self.mcts_c * np.sqrt(np.log(node.visits) / (child.visits + 1))
+                key=lambda child: (child.value / child.visits if child.visits > 0 else 0) +
+                                self.mcts_c * child.prior_prob * np.sqrt(node.visits / (child.visits + 1))
             )
             node = best_node
         return node
+
 
     def _expand(self, node: MCTSNode):
         """
@@ -340,9 +341,15 @@ class FinalAgent:
             return
 
         actions = self.search_problem.get_available_actions(node.state)
-        for action in actions:
+        state_features = self._encode_state(node.state)
+        with torch.no_grad():
+            policy_output = self.policy_model(torch.tensor(state_features, dtype=torch.float32))
+
+        for i, action in enumerate(actions):
             next_state = self.search_problem.transition(node.state, action)
+            prior_prob = policy_output[i].item()
             child_node = MCTSNode(state=next_state, parent=node, action=action)
+            child_node.prior_prob = prior_prob
             node.children.append(child_node)
 
     def _simulate(self, node: MCTSNode) -> float:
