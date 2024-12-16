@@ -78,10 +78,15 @@ class ValueNetwork(nn.Module):
         # TODO: Add more layers, non-linear functions, etc.=
         self.linear = nn.Linear(input_size, output_size)
         
-        self.fc1 = nn.Linear(input_size, 32)
-        self.fc2 = nn.Linear(32, 16)
-        self.fc3 = nn.Linear(16, 8)
-        self.fc4 = nn.Linear(8, output_size)
+        # self.fc1 = nn.Linear(input_size, 32)
+        # self.fc2 = nn.Linear(32, 16)
+        # self.fc3 = nn.Linear(16, 8)
+        # self.fc4 = nn.Linear(8, output_size)
+
+        self.fc1 = nn.Linear(input_size, 128)
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, 32)
+        self.fc4 = nn.Linear(32, output_size)
 
         self.sigmoid = nn.Sigmoid()
         self.tanh = nn.Tanh()
@@ -197,10 +202,14 @@ class PolicyNetwork(nn.Module):
         # TODO: Add more layers, non-linear functions, etc.
         self.linear = nn.Linear(input_size, output_size)
         
-        self.fc1 = nn.Linear(input_size, 32)
-        self.fc2 = nn.Linear(32, 16)
-        self.fc3 = nn.Linear(16, 8)
-        self.fc4 = nn.Linear(8, output_size)
+        # self.fc1 = nn.Linear(input_size, 32)
+        # self.fc2 = nn.Linear(32, 16)
+        # self.fc3 = nn.Linear(16, 8)
+        # self.fc4 = nn.Linear(8, output_size)
+        self.fc1 = nn.Linear(input_size, 128)
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, 32)
+        self.fc4 = nn.Linear(32, output_size)
 
         self.sigmoid = nn.Sigmoid()
         self.tanh = nn.Tanh()

@@ -133,10 +133,14 @@ class ValueNetwork(nn.Module):
         # TODO: Add more layers, non-linear functions, etc.=
         self.linear = nn.Linear(input_size, output_size)
       
-        self.fc1 = nn.Linear(input_size, 32)
-        self.fc2 = nn.Linear(32, 16)
-        self.fc3 = nn.Linear(16, 8)
-        self.fc4 = nn.Linear(8, output_size)
+        # self.fc1 = nn.Linear(input_size, 32)
+        # self.fc2 = nn.Linear(32, 16)
+        # self.fc3 = nn.Linear(16, 8)
+        # self.fc4 = nn.Linear(8, output_size)
+        self.fc1 = nn.Linear(input_size, 128)
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, 32)
+        self.fc4 = nn.Linear(32, output_size)
 
         self.sigmoid = nn.Sigmoid()
         self.tanh = nn.Tanh()
@@ -181,10 +185,14 @@ class PolicyNetwork(nn.Module):
         # TODO: Add more layers, non-linear functions, etc.
         self.linear = nn.Linear(input_size, output_size)
 
-        self.fc1 = nn.Linear(input_size, 32)
-        self.fc2 = nn.Linear(32, 16)
-        self.fc3 = nn.Linear(16, 8)
-        self.fc4 = nn.Linear(8, output_size)
+        # self.fc1 = nn.Linear(input_size, 32)
+        # self.fc2 = nn.Linear(32, 16)
+        # self.fc3 = nn.Linear(16, 8)
+        # self.fc4 = nn.Linear(8, output_size)
+        self.fc1 = nn.Linear(input_size, 128)
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, 32)
+        self.fc4 = nn.Linear(32, output_size)
 
         self.sigmoid = nn.Sigmoid()
         self.tanh = nn.Tanh()
@@ -265,7 +273,7 @@ class FinalAgent:
             mcts_c (float): Exploration constant for MCTS.
             board_size (int): Size of the Go board.
         """
-        feature_size = 100
+        feature_size = board_size ** 2 * 4
         self.value_model = load_model(value_model_path, ValueNetwork(feature_size))
         self.policy_model = load_model(policy_model_path, PolicyNetwork(feature_size, board_size))
         self.mcts_c = mcts_c
@@ -404,10 +412,10 @@ def main():
     from game_runner import run_many
 
     agent1 = FinalAgent()
-    agent2 = GreedyAgent()
+    agent2 = RandomAgent()
     # Play 10 games
     run_many(agent1, agent2, 10)
 
 
 if __name__ == "__main__":
-    main()
+    main() 
