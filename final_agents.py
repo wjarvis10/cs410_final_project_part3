@@ -110,6 +110,9 @@ class MCTSNode:
         
         # Value of node (number of times simulations from children results in black win)
         self.value = 0
+
+        #Prior Probaility 
+        self.prior_prob = 1
         
         # Action that led to this node
         self.action = action
@@ -129,13 +132,7 @@ class ValueNetwork(nn.Module):
 
         # TODO: Add more layers, non-linear functions, etc.=
         self.linear = nn.Linear(input_size, output_size)
-        
-        # self.fc1 = nn.Linear(input_size, 128)
-        # self.fc2 = nn.Linear(128, 64)
-        # self.fc3 = nn.Linear(64, 32)
-        # self.fc4 = nn.Linear(32, 16)
-        # self.fc5 = nn.Linear(16, output_size)
-        
+      
         self.fc1 = nn.Linear(input_size, 32)
         self.fc2 = nn.Linear(32, 16)
         self.fc3 = nn.Linear(16, 8)
@@ -231,20 +228,9 @@ def get_features(game_state: GoState):
         features: list of features
     """
     board_size = game_state.size
-    # black_pieces = game_state.get_pieces_array(0).flatten()
-    # white_pieces = game_state.get_pieces_array(1).flatten()
-
-    # One-hot encoding of stone locations (n * n * 2 features)
-    # stone_locations = np.concatenate((black_pieces, white_pieces)).tolist()
-
-    # Player to move ( 0 = black, 1 = white)
-    # player_to_move = game_state.player_to_move()
-
-
-    # TODO: Encode game_state into a list of features
+   
     features = [] 
-    # features.extend(board)
-    # features.append(player_to_move)
+ 
     features = np.array(game_state.get_board()).flatten()
     return features
 
@@ -394,41 +380,6 @@ class FinalAgent:
             np.ndarray: Encoded features.
         """
         return np.array(state.get_board()).flatten()
-
-# # Helper functions to load models
-# def load_value_model(path: str, input_size: int) -> nn.Module:
-#     model = ValueNetwork(input_size)
-#     checkpoint = torch.load(path)
-#     model.load_state_dict(checkpoint['model_state_dict'])
-#     model.eval()
-#     return model
-
-# def load_policy_model(path: str, input_size: int, board_size: int) -> nn.Module:
-#     model = PolicyNetwork(input_size, board_size)
-#     checkpoint = torch.load(path)
-#     model.load_state_dict(checkpoint['model_state_dict'])
-#     model.eval()
-#     return model
-
-# # Example instantiation
-# if __name__ == "__main__":
-#     board_size = 5
-#     feature_size = board_size ** 2 * 4  # Example feature size based on board size
-
-#     value_model_path = "value_model.pt"
-#     policy_model_path = "policy_model.pt"
-
-#     value_model = load_value_model(value_model_path, feature_size)
-#     policy_model = load_policy_model(policy_model_path, feature_size, board_size)
-
-#     final_agent = FinalAgent(value_model, policy_model, board_size=board_size)
-
-#     # Example game state
-#     game_state = GoState(board_size)
-#     time_limit = 1.0  # 1 second per move
-
-#     action = final_agent.get_move(game_state, time_limit)
-#     print(f"FinalAgent chose action: {action}")
 
 def main():
     from game_runner import run_many
