@@ -112,7 +112,7 @@ class MCTSNode:
         self.value = 0
 
         #Prior Probaility 
-        self.prior_prob = 1
+        self.prior_prob = 0
         
         # Action that led to this node
         self.action = action
