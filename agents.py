@@ -524,7 +524,6 @@ class MCTSNode:
         """
         return hash(self.state)
 
-
 class MCTSAgent(GameAgent):
     def __init__(self, c=np.sqrt(2)):
         """
@@ -547,9 +546,84 @@ class MCTSAgent(GameAgent):
         Returns:
             best_action (Action): best action for current game state
         """
-        # TODO: Implement MCTS
-        pass
+        root_node = MCTSNode(state=game_state)
+        time_limit = 1
+        start_time = time.time()
+        while time.time() - start_time < time_limit:
+            leaf_node = self.select(root_node)
+            self.expand(leaf_node)
+            results = self.simulate(leaf_node.children)
+            self.backpropagate(results, leaf_node.children)
+            
+        best_action = game_state.size ** 2
+        max_visits = 0
 
+        for child in root_node.children:
+            if child.visits > max_visits:
+                max_visits = child.visits
+                best_action = child.action
+                
+        return best_action
+    
+    def select(self, node: MCTSNode) -> MCTSNode:
+        curr_node = node
+        while curr_node.children:
+            best_node = None
+            best_uct_value = -float('inf')
+
+            for child in curr_node.children:
+                if child.visits == 0:
+                    uct_value = float('inf')
+                else:
+                    uct_value = (child.value / child.visits) + self.c * np.sqrt(np.log(curr_node.visits) / child.visits)
+
+                if uct_value > best_uct_value:
+                    best_uct_value = uct_value
+                    best_node = child
+
+            curr_node = best_node
+        return curr_node
+
+    def expand(self, leaf: MCTSNode) -> list:
+        state = leaf.state
+
+        if not self.search_problem.is_terminal_state(state):
+            actions = self.search_problem.get_available_actions(state)
+            for action in actions:
+                new_state = self.search_problem.transition(state, action)
+                child_node = MCTSNode(state=new_state, parent=leaf, action=action)
+                leaf.children.append(child_node)
+        else:
+            self.backpropagate([self.search_problem.evaluate_terminal(state)], [leaf])
+
+    def simulate(self, children: list) -> list:
+        results = []
+        for child in children:
+            result = self.random_playout(child.state)
+            results.append(result)
+        return results
+
+    def random_playout(self, state: GoState) -> int:
+        curr_state = state
+        while not self.search_problem.is_terminal_state(curr_state):
+            actions = self.search_problem.get_available_actions(curr_state)
+            action = np.random.choice(actions)
+            curr_state = self.search_problem.transition(curr_state, action)
+        
+        result = self.search_problem.evaluate_terminal(curr_state)
+        return result
+
+    def backpropagate(self, results: list, children: list):
+        for child, result in zip(children, results):
+            curr_node = child
+            while curr_node is not None:
+                curr_node.visits += 1
+                if result == 1 and curr_node.state.player_to_move() == 1: # Black
+                    curr_node.value += 1
+                elif result == -1 and curr_node.state.player_to_move() == 0: # White
+                    curr_node.value += 1
+                curr_node = curr_node.parent
+    
     def __str__(self):
         return "MCTS"
 
