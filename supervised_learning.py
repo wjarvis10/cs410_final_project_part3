@@ -64,21 +64,7 @@ def get_features(game_state: GoState):
     Output:
         features: list of features
     """
-    board_size = game_state.size
-    # black_pieces = game_state.get_pieces_array(0).flatten()
-    # white_pieces = game_state.get_pieces_array(1).flatten()
-
-    # One-hot encoding of stone locations (n * n * 2 features)
-    # stone_locations = np.concatenate((black_pieces, white_pieces)).tolist()
-
-    # Player to move ( 0 = black, 1 = white)
-    # player_to_move = game_state.player_to_move()
-
-
     # TODO: Encode game_state into a list of features
-    features = [] 
-    # features.extend(board)
-    # features.append(player_to_move)
     features = np.array(game_state.get_board()).flatten()
     return features
 
@@ -262,12 +248,7 @@ def train_policy_network(dataset, num_epochs, learning_rate):
     # You can use Adam, which is stochastic gradient descent with ADAptive Momentum
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-    batch_size = 32
-
     for epoch in range(num_epochs):
-
-        # batch_loss = 0.0
-        # batch_counter = 0
 
         # data = (state, action, outcome)
         for data_point in dataset:
@@ -289,19 +270,6 @@ def train_policy_network(dataset, num_epochs, learning_rate):
 
             # TODO: Compute Loss for data point
             loss = loss_function(prediction, label)
-            # batch_loss += loss
-            # batch_counter += 1
-
-            # if batch_counter % batch_size == 0:
-            #     # Call backward to run backward pass and compute gradients
-            #     batch_loss.backward()
-
-            #     # Run gradient descent step with optimizer
-            #     optimizer.step()
-
-            #     # print("Batch_Loss: ", batch_loss)
-            #     optimizer.zero_grad()
-            #     batch_loss = 0.0
 
             loss.backward()
 

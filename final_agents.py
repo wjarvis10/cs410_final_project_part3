@@ -255,7 +255,7 @@ def load_model(path: str, model):
 # ------------------------------------------------------------------------------
 
 class FinalAgent:
-    def __init__(self, value_model_path="value_model.pt", policy_model_path="policy_model.pt", mcts_c=np.sqrt(2), board_size=5):
+    def __init__(self, value_model_path="value_model_2.pt", policy_model_path="policy_model_2.pt", mcts_c=np.sqrt(2), board_size=5):
         """
         Initializes the FinalAgent, combining MCTS, Value Network, and Policy Network.
 
