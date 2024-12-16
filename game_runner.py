@@ -4,7 +4,8 @@ import abc
 import tqdm
 import numpy as np
 from go_gui import GoGUI
-from agents import *
+from agents import AlphaBetaAgent, MCTSAgent, GreedyAgent, RandomAgent
+from final_agents import FinalAgent
 import pygame
 import argparse
 
@@ -220,6 +221,8 @@ def create_agent(agent_type: str, **kwargs):
         return GreedyAgent()
     elif agent_type.lower() == "mcts":
         return MCTSAgent()
+    elif agent_type.lower() == "final_agent":
+        return FinalAgent()
     # Add more agent types here as needed
     else:
         raise ValueError(f"Unknown agent type: {agent_type}")

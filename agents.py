@@ -5,7 +5,7 @@ import random
 from abc import ABC, abstractmethod
 import numpy as np
 import time
-from game_runner import run_many
+# from game_runner import run_many
 import pickle
 import torch
 from torch import nn
