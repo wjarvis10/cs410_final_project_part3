@@ -106,10 +106,6 @@ class ValueNetwork(nn.Module):
         self.fc2 = nn.Linear(32, 16)
         self.fc3 = nn.Linear(16, 8)
         self.fc4 = nn.Linear(8, output_size)
-        # self.fc1 = nn.Linear(input_size, 128)
-        # self.fc2 = nn.Linear(128, 64)
-        # self.fc3 = nn.Linear(64, 32)
-        # self.fc4 = nn.Linear(32, output_size)
 
         self.sigmoid = nn.Sigmoid()
         self.tanh = nn.Tanh()
@@ -135,11 +131,7 @@ class ValueNetwork(nn.Module):
         a3 = self.relu(z3)
 
         z4 = self.fc4(a3)
-        # a4 = self.tanh(z4)
         output = self.sigmoid(z4)
-
-        # z5 = self.fc5(a4)
-        # output = self.sigmoid(z5)
 
         return output
       
@@ -158,11 +150,7 @@ class PolicyNetwork(nn.Module):
         self.fc2 = nn.Linear(32, 16)
         self.fc3 = nn.Linear(16, 8)
         self.fc4 = nn.Linear(8, output_size)
-        # self.fc1 = nn.Linear(input_size, 128)
-        # self.fc2 = nn.Linear(128, 64)
-        # self.fc3 = nn.Linear(64, 32)
-        # self.fc4 = nn.Linear(32, output_size)
-
+    
         self.sigmoid = nn.Sigmoid()
         self.tanh = nn.Tanh()
         self.relu = nn.ReLU() 
