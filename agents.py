@@ -273,7 +273,7 @@ def alpha_beta_ids(asp: GoProblem, state: GameState, cutoff_depth: int, start_ti
                     next_state = asp.transition(state, action)
                     # Recursive action - will store max value of the possible next states
                     # (_, value, alpha_return, beta_return) =  min_value_helper(next_state, start_time, time_limit, alpha, beta)
-                    (_, value, alpha_return, beta_return) =  min_value_helper(next_state, depth + 1, alpha, beta)
+                    (_, value, _, _) =  min_value_helper(next_state, depth + 1, alpha, beta)
                     
                     # Update best value for the maximizer 
                     if value > best_value:
@@ -310,7 +310,7 @@ def alpha_beta_ids(asp: GoProblem, state: GameState, cutoff_depth: int, start_ti
                 # If best value is less than alpha --> prune
                 # - Comparing best value for minimizer to the best option for the maximizer (alpha) higher in tree
                 # - If the value is less than alpha, then the minizer can prune since it knows the maximizer will
-                #   never pick the action with the lower value 
+                #   never pick the action with the lower value
                 if best_value < alpha: 
                     # prune
                     break 
@@ -319,7 +319,7 @@ def alpha_beta_ids(asp: GoProblem, state: GameState, cutoff_depth: int, start_ti
                     next_state = asp.transition(state, action)
                     # Recursive action - will store min value of the possible next states
                     # (_, value, alpha_return, beta_return) = max_value_helper(next_state, start_time, time_limit, alpha, beta)
-                    (_, value, alpha_return, beta_return) = max_value_helper(next_state, depth + 1, alpha, beta)
+                    (_, value, _, _) = max_value_helper(next_state, depth + 1, alpha, beta)
 
                     if value < best_value:
                         best_value = value
@@ -355,7 +355,7 @@ def alpha_beta_ids(asp: GoProblem, state: GameState, cutoff_depth: int, start_ti
     
             # Get Best Actin
             # (action, value, alpha_return, beta_return) = max_value_helper(start_state, start_time, time_limit, alpha, beta)
-            (action, value, alpha_return, beta_return) = max_value_helper(start_state, 1, alpha, beta)
+            (action, value, _, _) = max_value_helper(start_state, 1, alpha, beta)
 
             return (action, value)
         
@@ -364,7 +364,7 @@ def alpha_beta_ids(asp: GoProblem, state: GameState, cutoff_depth: int, start_ti
             
             # Get Best Action
             # (action, value, alpha_return, beta_return) = min_value_helper(start_state, start_time, time_limit, alpha, beta) 
-            (action, value, alpha_return, beta_return) = min_value_helper(start_state, 1, alpha, beta) 
+            (action, value, _, _) = min_value_helper(start_state, 1, alpha, beta) 
 
             return (action, value)
         
