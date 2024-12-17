@@ -383,7 +383,7 @@ def alpha_beta_ids(asp: GoProblem, state: GameState, cutoff_depth: int, start_ti
     return None
     
 class FinalAgent(GameAgent):
-    def __init__(self, cutoff_time=0.5, model_path="value_model.pt", input_size=4*5*5):
+    def __init__(self, cutoff_time=0.9, model_path="value_model.pt", input_size=4*5*5):
         super().__init__()
         self.cutoff_time = cutoff_time
         self.move_counter = 0
@@ -439,7 +439,7 @@ class FinalAgent(GameAgent):
             
         best_action = random.choice(legal_actions)
         current_depth = 2
-        max_depth = 5
+        max_depth = float('inf')
             
         while (time.time() - start_time) < self.cutoff_time and current_depth <= max_depth:
             action, _ = alpha_beta_ids(
