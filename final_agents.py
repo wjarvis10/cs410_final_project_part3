@@ -91,37 +91,6 @@ class GreedyAgent(GameAgent):
         Description of agent (Greedy + heuristic/search problem used)
         """
         return "GreedyAgent + " + str(self.search_problem)
-    
-class MCTSNode:
-    def __init__(self, state, parent=None, children=None, action=None):
-        # GameState for Node
-        self.state = state
-
-        # Parent (MCTSNode)
-        self.parent = parent
-        
-        # Children List of MCTSNodes
-        if children is None:
-            children = []
-        self.children = children
-        
-        # Number of times this node has been visited in tree search
-        self.visits = 0
-        
-        # Value of node (number of times simulations from children results in black win)
-        self.value = 0
-
-        #Prior Probaility 
-        self.prior_prob = 0
-        
-        # Action that led to this node
-        self.action = action
-
-    def __hash__(self):
-        """
-        Hash function for MCTSNode is hash of state
-        """
-        return hash(self.state)
 
 class ValueNetwork(nn.Module):
     def __init__(self, input_size):
@@ -133,14 +102,14 @@ class ValueNetwork(nn.Module):
         # TODO: Add more layers, non-linear functions, etc.=
         self.linear = nn.Linear(input_size, output_size)
       
-        # self.fc1 = nn.Linear(input_size, 32)
-        # self.fc2 = nn.Linear(32, 16)
-        # self.fc3 = nn.Linear(16, 8)
-        # self.fc4 = nn.Linear(8, output_size)
-        self.fc1 = nn.Linear(input_size, 128)
-        self.fc2 = nn.Linear(128, 64)
-        self.fc3 = nn.Linear(64, 32)
-        self.fc4 = nn.Linear(32, output_size)
+        self.fc1 = nn.Linear(input_size, 32)
+        self.fc2 = nn.Linear(32, 16)
+        self.fc3 = nn.Linear(16, 8)
+        self.fc4 = nn.Linear(8, output_size)
+        # self.fc1 = nn.Linear(input_size, 128)
+        # self.fc2 = nn.Linear(128, 64)
+        # self.fc3 = nn.Linear(64, 32)
+        # self.fc4 = nn.Linear(32, output_size)
 
         self.sigmoid = nn.Sigmoid()
         self.tanh = nn.Tanh()
@@ -185,14 +154,14 @@ class PolicyNetwork(nn.Module):
         # TODO: Add more layers, non-linear functions, etc.
         self.linear = nn.Linear(input_size, output_size)
 
-        # self.fc1 = nn.Linear(input_size, 32)
-        # self.fc2 = nn.Linear(32, 16)
-        # self.fc3 = nn.Linear(16, 8)
-        # self.fc4 = nn.Linear(8, output_size)
-        self.fc1 = nn.Linear(input_size, 128)
-        self.fc2 = nn.Linear(128, 64)
-        self.fc3 = nn.Linear(64, 32)
-        self.fc4 = nn.Linear(32, output_size)
+        self.fc1 = nn.Linear(input_size, 32)
+        self.fc2 = nn.Linear(32, 16)
+        self.fc3 = nn.Linear(16, 8)
+        self.fc4 = nn.Linear(8, output_size)
+        # self.fc1 = nn.Linear(input_size, 128)
+        # self.fc2 = nn.Linear(128, 64)
+        # self.fc3 = nn.Linear(64, 32)
+        # self.fc4 = nn.Linear(32, output_size)
 
         self.sigmoid = nn.Sigmoid()
         self.tanh = nn.Tanh()
@@ -412,59 +381,119 @@ def alpha_beta_ids(asp: GoProblem, state: GameState, cutoff_depth: int, start_ti
         
     return None
     
+# class FinalAgent(GameAgent):
+#     def __init__(self, cutoff_time=0.5, search_problem=GoProblemSimpleHeuristic()):
+#         super().__init__()
+#         self.cutoff_time = cutoff_time
+#         self.search_problem = search_problem
+#         self.move_counter = 0
+
+#     def get_move(self, game_state, time_limit):
+#         """
+#         Get move of agent for given game state using iterative deepening algorithm (+ alpha-beta).
+#         Iterative deepening is a search algorithm that repeatedly searches for a solution to a problem,
+#         increasing the depth of the search with each iteration.
+
+#         The advantage of iterative deepening is that you can stop the search based on the time limit, rather than depth.
+#         The recommended approach is to modify your implementation of Alpha-beta to stop when the time limit is reached
+#         and run IDS on that modified version.
+
+#         Args:
+#             game_state (GameState): current game state
+#             time_limit (float): time limit for agent to return a move
+#         Returns:
+#             best_action (Action): best action for current game state
+#         """
+#         # TODO: implement get_move algorithm of IterativeDeepeningAgent
+        
+#         # Get start time 
+#         start_time = time.time()
+
+#         print("Move ", self.move_counter)
+#         self.move_counter += 1
+
+#         best_action = random.choice(self.search_problem.get_available_actions(game_state))
+
+#         current_depth = 2
+
+#         max_depth = 4
+
+#         while (time.time() - start_time) < self.cutoff_time and current_depth <= max_depth:
+
+#             (action, _) = alpha_beta_ids(self.search_problem, game_state,  cutoff_depth=current_depth, start_time=start_time, cutoff_time=self.cutoff_time)
+
+#             if (time.time() - start_time) > self.cutoff_time:
+#                 break 
+
+#             if action is not None:
+#                 best_action = action
+            
+#             current_depth += 1
+
+#         return best_action 
+
+#     def __str__(self):
+#         return "Final Agent"
+
+    
 class FinalAgent(GameAgent):
-    def __init__(self, cutoff_time=0.5, search_problem=GoProblemSimpleHeuristic()):
+    def __init__(self, cutoff_time=0.5, model_path="value_model.pt", input_size=4*5*5):
         super().__init__()
         self.cutoff_time = cutoff_time
-        self.search_problem = search_problem
         self.move_counter = 0
+        
+        # Load ValueNetwork
+        self.value_network = ValueNetwork(input_size)
+        self.value_network = load_model(model_path, self.value_network)
+        self.value_network.eval()  # Set to evaluation mode
+
+        # Use custom heuristic function
+        self.search_problem = GoProblem(5)  # Assuming board size is 5 x 5
+        self.search_problem.heuristic = self.value_network_heuristic
+
+    def value_network_heuristic(self, state, player):
+        """
+        Heuristic function that uses ValueNetwork to evaluate the game state.
+
+        Args:
+            state (GoState): current game state
+            player (int): player (0 or 1) to move
+        Returns:
+            heuristic value (float): ValueNetwork output for the state
+        """
+        features = torch.tensor(get_features(state), dtype=torch.float32).unsqueeze(0)
+        output = self.value_network(features).item()
+
+        # Adjust heuristic to align with player perspective
+        return output if player == 0 else -output
 
     def get_move(self, game_state, time_limit):
         """
-        Get move of agent for given game state using iterative deepening algorithm (+ alpha-beta).
-        Iterative deepening is a search algorithm that repeatedly searches for a solution to a problem,
-        increasing the depth of the search with each iteration.
-
-        The advantage of iterative deepening is that you can stop the search based on the time limit, rather than depth.
-        The recommended approach is to modify your implementation of Alpha-beta to stop when the time limit is reached
-        and run IDS on that modified version.
-
-        Args:
-            game_state (GameState): current game state
-            time_limit (float): time limit for agent to return a move
-        Returns:
-            best_action (Action): best action for current game state
+        Iterative deepening alpha-beta search with ValueNetwork as heuristic.
         """
-        # TODO: implement get_move algorithm of IterativeDeepeningAgent
-        
-        # Get start time 
         start_time = time.time()
-
         print("Move ", self.move_counter)
         self.move_counter += 1
 
         best_action = random.choice(self.search_problem.get_available_actions(game_state))
-
         current_depth = 2
-
         max_depth = 4
 
         while (time.time() - start_time) < self.cutoff_time and current_depth <= max_depth:
-
-            (action, _) = alpha_beta_ids(self.search_problem, game_state,  cutoff_depth=current_depth, start_time=start_time, cutoff_time=self.cutoff_time)
-
+            action, _ = alpha_beta_ids(
+                self.search_problem, game_state, cutoff_depth=current_depth, 
+                start_time=start_time, cutoff_time=self.cutoff_time
+            )
             if (time.time() - start_time) > self.cutoff_time:
-                break 
-
+                break
             if action is not None:
                 best_action = action
-            
             current_depth += 1
 
-        return best_action 
+        return best_action
 
     def __str__(self):
-        return "Final Agent"
+        return "FinalAgent with ValueNetwork"
 
 def main():
     from game_runner import run_many
