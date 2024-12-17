@@ -293,10 +293,14 @@ def train_policy_network(dataset, num_epochs, learning_rate):
 
 
 dataset_5x5 = load_dataset('dataset_5x5.pkl')
+self_play_5x5_dataset = load_dataset('self_play_dataset_5x5.pkl')
 # dataset_9x9 = load_dataset('9x9_dataset.pkl')
 
-value_model = train_value_network(dataset_5x5, 10, 1e-4)
-save_model("value_model_2.pt", value_model)
+print("og: ", dataset_5x5[0][0])
+print("self: ", self_play_5x5_dataset[0][0])
 
-policy_net = train_policy_network(dataset_5x5, 10, 1e-4)
-save_model("policy_model_2.pt", policy_net)
+value_model = train_value_network(self_play_5x5_dataset, 10, 1e-4)
+save_model("value_model_3.pt", value_model)
+
+policy_net = train_policy_network(self_play_5x5_dataset, 10, 1e-4)
+save_model("policy_model_3.pt", policy_net)

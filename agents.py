@@ -424,11 +424,171 @@ class AlphaBetaAgent(GameAgent):
         return f"AlphaBeta w/ depth {self.depth} + " + str(self.search_problem)
 
 
+# ------------------------------------------------------------------------------
+#  IDS ALPHA BETA
+# ------------------------------------------------------------------------------
+
+# def alpha_beta(asp: GoProblem, state: GameState, time_limit: float) -> Action:
+def alpha_beta_ids(asp: GoProblem, state: GameState, cutoff_depth: int, start_time: float, cutoff_time: float) -> Action:
+    """
+    Implement the alpha-beta pruning algorithm on ASPs,
+    assuming that the given game is both 2-player and constant-sum.
+
+    Input:
+        asp - a HeuristicAdversarialSearchProblem
+        state - (GameState) current game state
+        cutoff_depth - the maximum search depth, where 0 is the start state. 
+                    Depth 1 is all the states reached after a single action from the start state (1 ply).
+                    cutoff_depth will always be greater than 0.
+
+        time_limit - (float) time limit for agent to return a move
+        
+    Output:
+        an action (an element of asp.get_available_actions(asp.get_start_state()))
+    """
+    
+    # Helper function for finding max value
+    # def max_value_helper(state: GameState, start_time: float, time_limit: float, alpha: int, beta: int) -> tuple[Action, int, int, int]:
+    def max_value_helper(state: GameState, depth: int, alpha: int, beta: int) -> tuple[Action, int, int, int]:
+        
+
+        if  asp.is_terminal_state(state): 
+            return (None, asp.evaluate_terminal(state), alpha, beta)
+        elif (time.time() - start_time) >= cutoff_time:
+            return (None, asp.heuristic(state, 0), alpha, beta)
+        elif depth >= cutoff_depth: 
+            return (None, asp.heuristic(state, 0), alpha, beta)
+        
+        else: 
+
+            # Initialize max value to negative infinity
+            # best_action = (None, float('-inf'))
+            best_value = float('-inf')
+            best_actions = []
+
+            # Iterate through possible actions and next states 
+            for action in asp.get_available_actions(state): 
+                
+                # If best value is greater than beta --> prune
+                #  - Comparing best value for the maximizer to best option for the minimizer (beta) higher in tree
+                #  - If value is greater than beta, then maximizer can prune since it knows minimzer will never
+                #    pick the action with the lower value 
+                if best_value > beta: 
+                    # prune
+                    break 
+                else: 
+                    # Get next state of the action
+                    next_state = asp.transition(state, action)
+                    # Recursive action - will store max value of the possible next states
+                    # (_, value, alpha_return, beta_return) =  min_value_helper(next_state, start_time, time_limit, alpha, beta)
+                    (_, value, alpha_return, beta_return) =  min_value_helper(next_state, depth + 1, alpha, beta)
+                    
+                    # Update best value for the maximizer 
+                    if value > best_value:
+                        best_value = value
+                    # best_action = action
+                        best_actions.clear()
+                        best_actions.append(action)
+                    elif value == best_value:
+                        best_actions.append(action)
+            
+
+            # Return max value
+            return (random.choice(best_actions), best_value, alpha, beta)
+
+    # Helper function for finding min value  
+    # def min_value_helper(state: GameState, start_time: float, time_limit: float, alpha: int, beta: int) -> tuple[Action, int, int, int]:
+    def min_value_helper(state: GameState, depth: int, alpha: int, beta: int) -> tuple[Action, int, int, int]:
+        if  asp.is_terminal_state(state): 
+            return (None, asp.evaluate_terminal(state), alpha, beta)
+        elif (time.time() - start_time) >= cutoff_time:
+            return (None, asp.heuristic(state, 1), alpha, beta)
+        elif depth >= cutoff_depth: 
+            return (None, asp.heuristic(state, 1), alpha, beta)
+        else:
+
+            # Initialize max value to negative infinity
+            # best_action = (None, float('inf'))
+            best_value = float('inf')
+            best_actions = []
+
+            # Iterate through possible actions and next states 
+            for action in asp.get_available_actions(state): 
+                
+                # If best value is less than alpha --> prune
+                # - Comparing best value for minimizer to the best option for the maximizer (alpha) higher in tree
+                # - If the value is less than alpha, then the minizer can prune since it knows the maximizer will
+                #   never pick the action with the lower value 
+                if best_value < alpha: 
+                    # prune
+                    break 
+                else: 
+                    # Get next state of the action
+                    next_state = asp.transition(state, action)
+                    # Recursive action - will store min value of the possible next states
+                    # (_, value, alpha_return, beta_return) = max_value_helper(next_state, start_time, time_limit, alpha, beta)
+                    (_, value, alpha_return, beta_return) = max_value_helper(next_state, depth + 1, alpha, beta)
+
+                    if value < best_value:
+                        best_value = value
+                        # best_action = action
+                        best_actions.clear()
+                        best_actions.append(action)
+                    elif value == best_value:
+                        best_actions.append(action)
+
+            # Return min value
+            return (random.choice(best_actions), best_value, alpha, beta)
+
+    # ------- START -------
+    # Initialize best action and stats
+    # best_action = None
+    # stats = {
+    #     'states_expanded': 0
+    # }
+
+    # Get start time
+    current_time = time.time()
+        
+    while (current_time - start_time) < cutoff_time:
+        # Get start state
+        start_state = state
+        
+        # Determine which player's move it is
+        current_player = start_state.player_to_move()
+
+        # Initialize alpha and beta
+        # - alpha = best already explored option for maximizer
+        alpha = float('-inf') 
+        # - beta = best already explored option for minimzer
+        beta = float('inf')
+
+        # Current Player is Maximizer
+        if current_player == 0: 
+    
+            # Get Best Actin
+            # (action, value, alpha_return, beta_return) = max_value_helper(start_state, start_time, time_limit, alpha, beta)
+            (action, value, alpha_return, beta_return) = max_value_helper(start_state, 1, alpha, beta)
+
+            return (action, value)
+        
+        # Current Player is Minimizer
+        else: 
+            
+            # Get Best Action
+            # (action, value, alpha_return, beta_return) = min_value_helper(start_state, start_time, time_limit, alpha, beta) 
+            (action, value, alpha_return, beta_return) = min_value_helper(start_state, 1, alpha, beta) 
+
+            return (action, value)
+        
+    return None
+    
 class IterativeDeepeningAgent(GameAgent):
-    def __init__(self, cutoff_time=1, search_problem=GoProblemSimpleHeuristic()):
+    def __init__(self, cutoff_time=0.5, search_problem=GoProblemSimpleHeuristic()):
         super().__init__()
         self.cutoff_time = cutoff_time
         self.search_problem = search_problem
+        self.move_counter = 0
 
     def get_move(self, game_state, time_limit):
         """
@@ -451,46 +611,28 @@ class IterativeDeepeningAgent(GameAgent):
         # Get start time 
         start_time = time.time()
 
-        # Determine which player's move it is
-        current_player = game_state.player_to_move()
+        print("Move ", self.move_counter)
+        self.move_counter += 1
 
-        # Current Player is Maximizer
-        if current_player == 0: 
-            best_value = float('-inf')
-            best_action = None
+        best_action = random.choice(self.search_problem.get_available_actions(game_state))
 
-            cutoff_depth = 1
-            current_duration = time.time() - start_time
-            while current_duration < time_limit:
-                (action, value) = alpha_beta(self.search_problem, game_state,  cutoff_depth=cutoff_depth)
-                
-                if value > best_value:
-                    best_value = value
-                    best_action = action
+        current_depth = 2
 
-                cutoff_depth += 1
-                current_duration = time.time() - start_time
+        max_depth = 4
+
+        while (time.time() - start_time) < self.cutoff_time and current_depth <= max_depth:
+
+            (action, _) = alpha_beta_ids(self.search_problem, game_state,  cutoff_depth=current_depth, start_time=start_time, cutoff_time=self.cutoff_time)
+
+            if (time.time() - start_time) > self.cutoff_time:
+                break 
+
+            if action is not None:
+                best_action = action
             
-            return best_action
-            
-        # Current Player is Minimizer
-        else: 
-            best_value = float('inf')
-            best_action = None
+            current_depth += 1
 
-            cutoff_depth = 1
-            current_duration = time.time() - start_time
-            while current_duration < time_limit:
-                (action, value) = alpha_beta(self.search_problem, game_state,  cutoff_depth=cutoff_depth)
-            
-                if value < best_value:
-                    best_value = value
-                    best_action = action
-
-                cutoff_depth += 1
-                current_duration = time.time() - start_time
-            
-            return best_action
+        return best_action 
 
     def __str__(self):
         return f"IterativeDeepneing + " + str(self.search_problem)

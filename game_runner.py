@@ -4,7 +4,7 @@ import abc
 import tqdm
 import numpy as np
 from go_gui import GoGUI
-from agents import AlphaBetaAgent, MCTSAgent, GreedyAgent, RandomAgent
+from agents import AlphaBetaAgent, MCTSAgent, GreedyAgent, RandomAgent, IterativeDeepeningAgent
 from final_agents import FinalAgent
 import pygame
 import argparse
@@ -213,7 +213,7 @@ def create_agent(agent_type: str, **kwargs):
     :param kwargs: Additional arguments for the agent (e.g., depth, parameters, etc.)
     """
     if agent_type.lower() == "alphabeta":
-        depth = kwargs.get('depth', 2)
+        depth = kwargs.get('depth', 3)
         return AlphaBetaAgent(depth=depth)
     elif agent_type.lower() == "random":
         return RandomAgent()
@@ -223,6 +223,8 @@ def create_agent(agent_type: str, **kwargs):
         return MCTSAgent()
     elif agent_type.lower() == "final_agent":
         return FinalAgent()
+    elif agent_type.lower() == "ids": 
+        return IterativeDeepeningAgent()
     # Add more agent types here as needed
     else:
         raise ValueError(f"Unknown agent type: {agent_type}")

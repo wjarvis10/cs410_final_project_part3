@@ -262,148 +262,206 @@ def load_model(path: str, model):
 #  FINAL AGENT CODE
 # ------------------------------------------------------------------------------
 
-class FinalAgent:
-    def __init__(self, value_model_path="value_model_2.pt", policy_model_path="policy_model_2.pt", mcts_c=np.sqrt(2), board_size=5):
-        """
-        Initializes the FinalAgent, combining MCTS, Value Network, and Policy Network.
+# def alpha_beta(asp: GoProblem, state: GameState, time_limit: float) -> Action:
+def alpha_beta_ids(asp: GoProblem, state: GameState, cutoff_depth: int, start_time: float, cutoff_time: float) -> Action:
+    """
+    Implement the alpha-beta pruning algorithm on ASPs,
+    assuming that the given game is both 2-player and constant-sum.
 
-        Args:
-            value_model (nn.Module): Pretrained Value Network model.
-            policy_model (nn.Module): Pretrained Policy Network model.
-            mcts_c (float): Exploration constant for MCTS.
-            board_size (int): Size of the Go board.
-        """
-        feature_size = board_size ** 2 * 4
-        self.value_model = load_model(value_model_path, ValueNetwork(feature_size))
-        self.policy_model = load_model(policy_model_path, PolicyNetwork(feature_size, board_size))
-        self.mcts_c = mcts_c
-        self.board_size = board_size
-        self.search_problem = GoProblem()
+    Input:
+        asp - a HeuristicAdversarialSearchProblem
+        state - (GameState) current game state
+        cutoff_depth - the maximum search depth, where 0 is the start state. 
+                    Depth 1 is all the states reached after a single action from the start state (1 ply).
+                    cutoff_depth will always be greater than 0.
+
+        time_limit - (float) time limit for agent to return a move
+        
+    Output:
+        an action (an element of asp.get_available_actions(asp.get_start_state()))
+    """
+    
+    # Helper function for finding max value
+    # def max_value_helper(state: GameState, start_time: float, time_limit: float, alpha: int, beta: int) -> tuple[Action, int, int, int]:
+    def max_value_helper(state: GameState, depth: int, alpha: int, beta: int) -> tuple[Action, int, int, int]:
+        
+
+        if  asp.is_terminal_state(state): 
+            return (None, asp.evaluate_terminal(state), alpha, beta)
+        elif (time.time() - start_time) >= cutoff_time:
+            return (None, asp.heuristic(state, 0), alpha, beta)
+        elif depth >= cutoff_depth: 
+            return (None, asp.heuristic(state, 0), alpha, beta)
+        
+        else: 
+
+            # Initialize max value to negative infinity
+            # best_action = (None, float('-inf'))
+            best_value = float('-inf')
+            best_actions = []
+
+            # Iterate through possible actions and next states 
+            for action in asp.get_available_actions(state): 
+                
+                # If best value is greater than beta --> prune
+                #  - Comparing best value for the maximizer to best option for the minimizer (beta) higher in tree
+                #  - If value is greater than beta, then maximizer can prune since it knows minimzer will never
+                #    pick the action with the lower value 
+                if best_value > beta: 
+                    # prune
+                    break 
+                else: 
+                    # Get next state of the action
+                    next_state = asp.transition(state, action)
+                    # Recursive action - will store max value of the possible next states
+                    # (_, value, alpha_return, beta_return) =  min_value_helper(next_state, start_time, time_limit, alpha, beta)
+                    (_, value, alpha_return, beta_return) =  min_value_helper(next_state, depth + 1, alpha, beta)
+                    
+                    # Update best value for the maximizer 
+                    if value > best_value:
+                        best_value = value
+                    # best_action = action
+                        best_actions.clear()
+                        best_actions.append(action)
+                    elif value == best_value:
+                        best_actions.append(action)
+            
+
+            # Return max value
+            return (random.choice(best_actions), best_value, alpha, beta)
+
+    # Helper function for finding min value  
+    # def min_value_helper(state: GameState, start_time: float, time_limit: float, alpha: int, beta: int) -> tuple[Action, int, int, int]:
+    def min_value_helper(state: GameState, depth: int, alpha: int, beta: int) -> tuple[Action, int, int, int]:
+        if  asp.is_terminal_state(state): 
+            return (None, asp.evaluate_terminal(state), alpha, beta)
+        elif (time.time() - start_time) >= cutoff_time:
+            return (None, asp.heuristic(state, 1), alpha, beta)
+        elif depth >= cutoff_depth: 
+            return (None, asp.heuristic(state, 1), alpha, beta)
+        else:
+
+            # Initialize max value to negative infinity
+            # best_action = (None, float('inf'))
+            best_value = float('inf')
+            best_actions = []
+
+            # Iterate through possible actions and next states 
+            for action in asp.get_available_actions(state): 
+                
+                # If best value is less than alpha --> prune
+                # - Comparing best value for minimizer to the best option for the maximizer (alpha) higher in tree
+                # - If the value is less than alpha, then the minizer can prune since it knows the maximizer will
+                #   never pick the action with the lower value 
+                if best_value < alpha: 
+                    # prune
+                    break 
+                else: 
+                    # Get next state of the action
+                    next_state = asp.transition(state, action)
+                    # Recursive action - will store min value of the possible next states
+                    # (_, value, alpha_return, beta_return) = max_value_helper(next_state, start_time, time_limit, alpha, beta)
+                    (_, value, alpha_return, beta_return) = max_value_helper(next_state, depth + 1, alpha, beta)
+
+                    if value < best_value:
+                        best_value = value
+                        # best_action = action
+                        best_actions.clear()
+                        best_actions.append(action)
+                    elif value == best_value:
+                        best_actions.append(action)
+
+            # Return min value
+            return (random.choice(best_actions), best_value, alpha, beta)
+
+    # ------- START -------
+
+    # Get start time
+    current_time = time.time()
+        
+    while (current_time - start_time) < cutoff_time:
+        # Get start state
+        start_state = state
+        
+        # Determine which player's move it is
+        current_player = start_state.player_to_move()
+
+        # Initialize alpha and beta
+        # - alpha = best already explored option for maximizer
+        alpha = float('-inf') 
+        # - beta = best already explored option for minimzer
+        beta = float('inf')
+
+        # Current Player is Maximizer
+        if current_player == 0: 
+    
+            # Get Best Actin
+            # (action, value, alpha_return, beta_return) = max_value_helper(start_state, start_time, time_limit, alpha, beta)
+            (action, value, alpha_return, beta_return) = max_value_helper(start_state, 1, alpha, beta)
+
+            return (action, value)
+        
+        # Current Player is Minimizer
+        else: 
+            
+            # Get Best Action
+            # (action, value, alpha_return, beta_return) = min_value_helper(start_state, start_time, time_limit, alpha, beta) 
+            (action, value, alpha_return, beta_return) = min_value_helper(start_state, 1, alpha, beta) 
+
+            return (action, value)
+        
+    return None
+    
+class FinalAgent(GameAgent):
+    def __init__(self, cutoff_time=0.5, search_problem=GoProblemSimpleHeuristic()):
+        super().__init__()
+        self.cutoff_time = cutoff_time
+        self.search_problem = search_problem
         self.move_counter = 0
 
-    def get_move(self, game_state: GoState, time_limit: float) -> Action:
+    def get_move(self, game_state, time_limit):
         """
-        Gets the best move for the current game state using MCTS guided by Value and Policy Networks.
+        Get move of agent for given game state using iterative deepening algorithm (+ alpha-beta).
+        Iterative deepening is a search algorithm that repeatedly searches for a solution to a problem,
+        increasing the depth of the search with each iteration.
+
+        The advantage of iterative deepening is that you can stop the search based on the time limit, rather than depth.
+        The recommended approach is to modify your implementation of Alpha-beta to stop when the time limit is reached
+        and run IDS on that modified version.
 
         Args:
-            game_state (GoState): The current game state.
-            time_limit (float): Time limit for the decision.
-
+            game_state (GameState): current game state
+            time_limit (float): time limit for agent to return a move
         Returns:
-            Action: The best action to take.
+            best_action (Action): best action for current game state
         """
-        root_node = MCTSNode(state=game_state)
+        # TODO: implement get_move algorithm of IterativeDeepeningAgent
+        
+        # Get start time 
         start_time = time.time()
 
         print("Move ", self.move_counter)
         self.move_counter += 1
-        
-        time_limit = 1 #Update this for better uses of time
 
-        legal_moves = root_node.state.legal_actions()
+        best_action = random.choice(self.search_problem.get_available_actions(game_state))
 
-        best_value = 0
-        best_action = random.choice(legal_moves)
+        current_depth = 2
 
-        while time.time() - start_time < time_limit:
-            leaf_node = self._select(root_node)
-            self._expand(leaf_node)
-            simulation_result = self._simulate(leaf_node)
-            self._backpropagate(leaf_node, simulation_result)
-            best_child = max(root_node.children, key=lambda child: child.visits)
-            if best_child.visits > best_value:
-                best_value = best_child.visits
-                best_action = best_child.action
+        max_depth = 4
 
-        # Choose the action leading to the most visited child node
-        # best_action = max(root_node.children, key=lambda child: child.visits).action
+        while (time.time() - start_time) < self.cutoff_time and current_depth <= max_depth:
 
-        return best_action
+            (action, _) = alpha_beta_ids(self.search_problem, game_state,  cutoff_depth=current_depth, start_time=start_time, cutoff_time=self.cutoff_time)
 
-    def _select(self, node: MCTSNode) -> MCTSNode:
-        """
-        Selects a node to expand using PUCT (Policy-based UCT).
+            if (time.time() - start_time) > self.cutoff_time:
+                break 
 
-        Args:
-            node (MCTSNode): The current node.
+            if action is not None:
+                best_action = action
+            
+            current_depth += 1
 
-        Returns:
-            MCTSNode: The selected node.
-        """
-        while node.children:
-            best_node = max(
-                node.children,
-                key=lambda child: (child.value / child.visits if child.visits > 0 else float('inf')) +
-                                self.mcts_c * child.prior_prob * np.sqrt(node.visits / (child.visits + 1))
-            )
-            node = best_node
-        return node
-
-
-    def _expand(self, node: MCTSNode):
-        """
-        Expands the node by adding all possible children.
-
-        Args:
-            node (MCTSNode): The node to expand.
-        """
-        if self.search_problem.is_terminal_state(node.state):
-            return
-
-        actions = self.search_problem.get_available_actions(node.state)
-        state_features = self._encode_state(node.state)
-        with torch.no_grad():
-            policy_output = self.policy_model(torch.tensor(state_features, dtype=torch.float32))
-
-        for i, action in enumerate(actions):
-            next_state = self.search_problem.transition(node.state, action)
-            prior_prob = policy_output[i].item()
-            child_node = MCTSNode(state=next_state, parent=node, action=action)
-            child_node.prior_prob = prior_prob
-            node.children.append(child_node)
-
-    def _simulate(self, node: MCTSNode) -> float:
-        """
-        Simulates a game from the node to the end using the Value Network.
-
-        Args:
-            node (MCTSNode): The node to simulate from.
-
-        Returns:
-            float: The value of the end state from the perspective of the current player.
-        """
-        features = self._encode_state(node.state)
-        with torch.no_grad():
-            value = self.value_model(torch.tensor(features, dtype=torch.float32)).item()
-        return value
-
-    def _backpropagate(self, node: MCTSNode, result: float):
-        """
-        Backpropagates the result of a simulation up the tree.
-
-        Args:
-            node (MCTSNode): The node where backpropagation starts.
-            result (float): The result of the simulation.
-        """
-        while node is not None:
-            node.visits += 1
-            if node.state.player_to_move() == 0:  # Maximizer
-                node.value += result
-            else:  # Minimizer
-                node.value -= result
-            node = node.parent
-
-    def _encode_state(self, state: GoState):
-        """
-        Encodes a game state into features for the neural networks.
-
-        Args:
-            state (GoState): The game state to encode.
-
-        Returns:
-            np.ndarray: Encoded features.
-        """
-        return np.array(state.get_board()).flatten()
+        return best_action 
 
     def __str__(self):
         return "Final Agent"
