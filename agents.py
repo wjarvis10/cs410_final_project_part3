@@ -393,7 +393,7 @@ class FinalAgent(GameAgent):
         self.value_network = load_model(model_path, self.value_network)
         self.value_network.eval()  # Set to evaluation mode
 
-        # Use custom heuristic function
+        # Set Value Network as Search Problem Heuristic 
         self.search_problem = GoProblem(5)  # Assuming board size is 5 x 5
         self.search_problem.heuristic = self.value_network_heuristic
 
@@ -414,7 +414,7 @@ class FinalAgent(GameAgent):
 
         output = self.value_network(features).item()
 
-        # Adjust heuristic to align with player perspective
+        # Adjust heuristic to align with current player
         return output if player == 0 else -output
 
     def get_move(self, game_state, time_limit):
