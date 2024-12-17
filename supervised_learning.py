@@ -5,7 +5,7 @@ import torch.optim as optim
 import random
 from go_search_problem import GoProblem, GoState
 from heuristic_go_problems import GoProblemLearnedHeuristic, GoProblemSimpleHeuristic
-from agents import GreedyAgent, RandomAgent, MCTSAgent, GameAgent, MinimaxAgent, AlphaBetaAgent, IterativeDeepeningAgent
+from cs410_final_project_part3.agents_original import GreedyAgent, RandomAgent, MCTSAgent, GameAgent, MinimaxAgent, AlphaBetaAgent, IterativeDeepeningAgent
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from game_runner import run_many

@@ -4,8 +4,8 @@ import abc
 import tqdm
 import numpy as np
 from go_gui import GoGUI
-from agents import AlphaBetaAgent, MCTSAgent, GreedyAgent, RandomAgent, IterativeDeepeningAgent
-from final_agents import FinalAgent
+from agents_original import AlphaBetaAgent, MCTSAgent, GreedyAgent, RandomAgent, IterativeDeepeningAgent
+from agents import FinalAgent
 import pygame
 import argparse
 
