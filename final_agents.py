@@ -209,6 +209,7 @@ def get_features(game_state: GoState):
     features = [] 
  
     features = np.array(game_state.get_board()).flatten()
+
     return features
 
 def load_model(path: str, model):
@@ -381,6 +382,95 @@ def alpha_beta_ids(asp: GoProblem, state: GameState, cutoff_depth: int, start_ti
         
     return None
     
+class FinalAgent(GameAgent):
+    def __init__(self, cutoff_time=0.5, model_path="value_model.pt", input_size=4*5*5):
+        super().__init__()
+        self.cutoff_time = cutoff_time
+        self.move_counter = 0
+        
+        # Load ValueNetwork
+        self.value_network = ValueNetwork(input_size)
+        self.value_network = load_model(model_path, self.value_network)
+        self.value_network.eval()  # Set to evaluation mode
+
+        # Use custom heuristic function
+        self.search_problem = GoProblem(5)  # Assuming board size is 5 x 5
+        self.search_problem.heuristic = self.value_network_heuristic
+
+        # Opening Book
+        self.opening_moves = [12, 6, 8, 16, 18]
+
+    def value_network_heuristic(self, state, player):
+        """
+        Heuristic function that uses ValueNetwork to evaluate the game state.
+
+        Args:
+            state (GoState): current game state
+            player (int): player (0 or 1) to move
+        Returns:
+            heuristic value (float): ValueNetwork output for the state
+        """
+        features = torch.tensor(get_features(state), dtype=torch.float32).unsqueeze(0)
+
+        output = self.value_network(features).item()
+
+        # Adjust heuristic to align with player perspective
+        return output if player == 0 else -output
+
+    def get_move(self, game_state, time_limit):
+        """
+        Iterative deepening alpha-beta search with ValueNetwork as heuristic.
+        """
+        start_time = time.time()
+
+        if len(self.search_problem.get_available_actions(game_state)) >= 24:
+            self.move_counter = 0
+        
+        self.move_counter += 1
+        print("Move ", self.move_counter)
+    
+        legal_actions = self.search_problem.get_available_actions(game_state)
+        
+        if self.move_counter <= 3:
+            for action in self.opening_moves: 
+                if action in legal_actions:
+                    print("Using opening book move...")
+                    return action
+            
+        best_action = random.choice(legal_actions)
+        current_depth = 2
+        max_depth = 5
+            
+        while (time.time() - start_time) < self.cutoff_time and current_depth <= max_depth:
+            action, _ = alpha_beta_ids(
+                self.search_problem, game_state, cutoff_depth=current_depth, 
+                start_time=start_time, cutoff_time=self.cutoff_time
+            )
+            if (time.time() - start_time) > self.cutoff_time:
+                break
+            if action is not None:
+                best_action = action
+            current_depth += 1
+
+        return best_action
+
+    def __str__(self):
+        return "FinalAgent with ValueNetwork"
+
+def main():
+    from game_runner import run_many
+
+    agent1 = FinalAgent()
+    agent2 = RandomAgent()
+    # Play 10 games
+    run_many(agent1, agent2, 10)
+
+
+if __name__ == "__main__":
+    main() 
+
+
+
 # class FinalAgent(GameAgent):
 #     def __init__(self, cutoff_time=0.5, search_problem=GoProblemSimpleHeuristic()):
 #         super().__init__()
@@ -434,75 +524,3 @@ def alpha_beta_ids(asp: GoProblem, state: GameState, cutoff_depth: int, start_ti
 
 #     def __str__(self):
 #         return "Final Agent"
-
-    
-class FinalAgent(GameAgent):
-    def __init__(self, cutoff_time=0.5, model_path="value_model.pt", input_size=4*5*5):
-        super().__init__()
-        self.cutoff_time = cutoff_time
-        self.move_counter = 0
-        
-        # Load ValueNetwork
-        self.value_network = ValueNetwork(input_size)
-        self.value_network = load_model(model_path, self.value_network)
-        self.value_network.eval()  # Set to evaluation mode
-
-        # Use custom heuristic function
-        self.search_problem = GoProblem(5)  # Assuming board size is 5 x 5
-        self.search_problem.heuristic = self.value_network_heuristic
-
-    def value_network_heuristic(self, state, player):
-        """
-        Heuristic function that uses ValueNetwork to evaluate the game state.
-
-        Args:
-            state (GoState): current game state
-            player (int): player (0 or 1) to move
-        Returns:
-            heuristic value (float): ValueNetwork output for the state
-        """
-        features = torch.tensor(get_features(state), dtype=torch.float32).unsqueeze(0)
-        output = self.value_network(features).item()
-
-        # Adjust heuristic to align with player perspective
-        return output if player == 0 else -output
-
-    def get_move(self, game_state, time_limit):
-        """
-        Iterative deepening alpha-beta search with ValueNetwork as heuristic.
-        """
-        start_time = time.time()
-        print("Move ", self.move_counter)
-        self.move_counter += 1
-
-        best_action = random.choice(self.search_problem.get_available_actions(game_state))
-        current_depth = 2
-        max_depth = 4
-
-        while (time.time() - start_time) < self.cutoff_time and current_depth <= max_depth:
-            action, _ = alpha_beta_ids(
-                self.search_problem, game_state, cutoff_depth=current_depth, 
-                start_time=start_time, cutoff_time=self.cutoff_time
-            )
-            if (time.time() - start_time) > self.cutoff_time:
-                break
-            if action is not None:
-                best_action = action
-            current_depth += 1
-
-        return best_action
-
-    def __str__(self):
-        return "FinalAgent with ValueNetwork"
-
-def main():
-    from game_runner import run_many
-
-    agent1 = FinalAgent()
-    agent2 = RandomAgent()
-    # Play 10 games
-    run_many(agent1, agent2, 10)
-
-
-if __name__ == "__main__":
-    main() 
