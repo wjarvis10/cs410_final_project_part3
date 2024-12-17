@@ -443,7 +443,7 @@ class FinalAgent(GameAgent):
         return best_action
 
     def __str__(self):
-        return "FinalAgent with ValueNetwork"
+        return "FinalAgent with ValueNetwork by WJ & JP"
 
 
 def get_final_agent_5x5():
